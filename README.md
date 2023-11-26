@@ -177,10 +177,52 @@ After Step 7, we have some specefic steps for Android and iOS:
 
 ## Step 8 (Android): Sign Android build
 
+To sign the Android build, we first need to encode the `key.jks` and `key.properties` files on your local machine. This can be achieved using the following commands:
+
+```bash
+openssl base64 -in key.jks -out jksEncoded.txt
+openssl base64 -in key.properties -out keyEncoded.txt
+```
+Note: Ensure that you execute these commands in the same directory where key.properties and key.jks are located.
+
+Executing these commands will generate encoded text for key.jks and key.properties. This encoded text should then be added to your Codemagic environment variables.
+
+
+Android:
+
+```yaml
+    - name: Decode Keystore and Properties
+      script: |
+        echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+        echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
+```
+
+Ensure that `$KEYSTORE` corresponds to your encoded `key.jks` file and `$KEY_PROPERTIES` corresponds to your encoded `key.properties` file. Verify that these variables have been correctly added to your Codemagic dashboard.
+
+
+
 ## Step 9 (Android): Install Dependencies And Gradle
+In this section of the workflow, we are installing the necessary dependencies for our project. The `flutter packages pub get` command fetches the Flutter packages needed for the project. We then navigate into the Android directory and run the Gradle wrapper command to ensure the correct Gradle version is used. Finally, we navigate back to the project root.
 
-## Step 10 (Adnroid): Build Android APk and ABB 
+```yaml
+    - name: Install dependencies
+      script: |
+        flutter packages pub get 
+        cd android && ./gradlew wrapper --gradle-version 7.4 --distribution-type all
+        cd ..
+```
 
+Please replace `7.4` with the specific version of Gradle that your project requires.
+
+## Step 10 (Adnroid): Build Android APk Or ABB 
+In this step, we will build the Android APK. The `flutter build apk --split-per-abi` command is used to build an APK file that is split by ABI. This results in smaller APK files that users download, which is particularly useful if your app supports multiple ABIs.
+
+
+```yaml
+    - name: Flutter build after package name change
+      script: |
+          flutter build apk --split-per-abi
+```
 
 
 ## Step 8 (iOS): Install Dependencies Via POD
