@@ -59,3 +59,60 @@ ios-client-release:
     vars:
       XCODE_SCHEME: "Runner"
 ```
+
+## Step 3: Change App Name 
+
+To change the app name in Android and iOS, you can use the following scripts:
+
+Android:
+```yaml
+ - name: Change package name
+   script: |
+      flutter pub add rename
+      dart pub global activate rename
+      rename setAppName --targets ios,android --value $APP_NAME
+```          
+
+iOS:
+```yaml
+  - name: Change iOS app name
+    script: |
+      echo "Change iOS app name to $APP_NAME"
+      /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
+```
+
+as we mentioned before we defined the $APP_NAME in valirable sections.
+
+
+
+## Step 4: Change App PackageName Or BundleIdentifier 
+
+To change the app packageName in Android or BundleIdentifier iOS, you can use the following scripts:
+
+Android:
+```yaml
+      - name: Change package name
+        script: |
+          rename setBundleId --targets android --value $ANDROID_PACKAGE_NAME
+```          
+
+iOS:
+```yaml
+      - name: Set bundle id
+        script: |
+          echo "Change iOS Bundle Id to $IOS_BUNDLE_ID"
+          sed -i '' -e 's/PRODUCT_BUNDLE_IDENTIFIER \= [^\;]*\;/PRODUCT_BUNDLE_IDENTIFIER = '${IOS_BUNDLE_ID}';/' ios/${XCODE_SCHEME}.xcodeproj/project.pbxproj
+```
+
+## Step 4: Change Projects Assets:
+
+this step is same for Andoird and IOS 
+
+```yaml
+      - name: Download and unzip assets
+        script: |
+          echo "Downloading assets from $ASSETS_URL"
+          curl -O $ASSETS_URL || echo "Failed to download assets"
+          echo "Unzipping assets.zip"
+          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+```
