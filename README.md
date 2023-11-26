@@ -39,6 +39,7 @@ Follow these steps to create the `codemagic.yaml` file:
 Here's an example of how the `codemagic.yaml` file might look:
 
 Android:
+
 ```yaml
 name: Android client release
 instance_type: mac_mini_m1
@@ -49,6 +50,7 @@ environment:
 ```
 
 iOS:
+
 ```yaml
 ios-client-release:
   name: iOS client release
@@ -60,59 +62,130 @@ ios-client-release:
       XCODE_SCHEME: "Runner"
 ```
 
-## Step 3: Change App Name 
+## Step 3: Change App Name
 
 To change the app name in Android and iOS, you can use the following scripts:
 
 Android:
+
 ```yaml
- - name: Change package name
-   script: |
-      flutter pub add rename
-      dart pub global activate rename
-      rename setAppName --targets ios,android --value $APP_NAME
-```          
+- name: Change package name
+  script: |
+    flutter pub add rename
+    dart pub global activate rename
+    rename setAppName --targets ios,android --value $APP_NAME
+```
 
 iOS:
+
 ```yaml
-  - name: Change iOS app name
-    script: |
-      echo "Change iOS app name to $APP_NAME"
-      /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
+- name: Change iOS app name
+  script: |
+    echo "Change iOS app name to $APP_NAME"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
 ```
 
 as we mentioned before we defined the $APP_NAME in valirable sections.
 
-
-
-## Step 4: Change App PackageName Or BundleIdentifier 
+## Step 4: Change App PackageName Or BundleIdentifier
 
 To change the app packageName in Android or BundleIdentifier iOS, you can use the following scripts:
 
 Android:
+
 ```yaml
-      - name: Change package name
-        script: |
-          rename setBundleId --targets android --value $ANDROID_PACKAGE_NAME
-```          
+- name: Change package name
+  script: |
+    rename setBundleId --targets android --value $ANDROID_PACKAGE_NAME
+```
 
 iOS:
-```yaml
-      - name: Set bundle id
-        script: |
-          echo "Change iOS Bundle Id to $IOS_BUNDLE_ID"
-          sed -i '' -e 's/PRODUCT_BUNDLE_IDENTIFIER \= [^\;]*\;/PRODUCT_BUNDLE_IDENTIFIER = '${IOS_BUNDLE_ID}';/' ios/${XCODE_SCHEME}.xcodeproj/project.pbxproj
-```
-
-## Step 4: Change Projects Assets:
-
-this step is same for Andoird and IOS 
 
 ```yaml
-      - name: Download and unzip assets
-        script: |
-          echo "Downloading assets from $ASSETS_URL"
-          curl -O $ASSETS_URL || echo "Failed to download assets"
-          echo "Unzipping assets.zip"
-          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+- name: Set bundle id
+  script: |
+    echo "Change iOS Bundle Id to $IOS_BUNDLE_ID"
+    sed -i '' -e 's/PRODUCT_BUNDLE_IDENTIFIER \= [^\;]*\;/PRODUCT_BUNDLE_IDENTIFIER = '${IOS_BUNDLE_ID}';/' ios/${XCODE_SCHEME}.xcodeproj/project.pbxproj
 ```
+
+## Step 5: Change Projects Assets
+
+This step is same for Andoird and IOS
+
+```yaml
+- name: Download and unzip assets
+  script: |
+    echo "Downloading assets from $ASSETS_URL"
+    curl -O $ASSETS_URL || echo "Failed to download assets"
+    echo "Unzipping assets.zip"
+    unzip -o assets.zip || echo "Failed to unzip assets.zip"
+```
+
+## Step 6: Firebase Configuration
+
+In this step we configure Firebase and download firebase config files for ANdroid and iOS:
+
+Android:
+
+```yaml
+- name: Download and unzip Android Google service json file
+  script: |
+    echo "Downloading firebase from $ANDROID_FIREBASE"
+    curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
+    echo "Unzipping google-service.zip"
+    unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
+```
+
+iOS:
+
+```yaml
+- name: Download and unzip GoogleService-Info.plist file
+  script: |
+    echo "Downloading firebase from $IOS_FIREBASE"
+    curl -O $IOS_FIREBASE || echo "Failed to download GoogleService-Info"
+    echo "Unzipping GoogleService-Info.zip"
+    unzip -o doki-sandbox-android.zip -d ios/Runner || echo "Failed to unzip GoogleService-Info.zip"
+```
+
+## Step 7: Change App Icon
+
+Next, We can change the app icon with this script
+
+Android:
+
+```yaml
+- name: Download and unzip Android App Icon
+  script: |
+    echo "Downloading icon from $ANDROID_ICON"
+    curl -O $ANDROID_ICON || echo "Failed to download res.zip"
+    echo "Unzipping res.zip"
+    unzip -o res.zip -d android/app/src/main || echo "Failed to unzip res.zip"
+```
+
+iOS:
+
+```yaml
+- name: Download and unzip Android App Icon
+  script: |
+    echo "Downloading icon from $IOS_ICON"
+    curl -O $IOS_ICON || echo "Failed to download Assets.xcassets.zip"
+    echo "Unzipping Assets.xcassets.zip"
+    unzip -o Assets.xcassets.zip -d ios/Runner || echo "Failed to unzip Assets.xcassets.zip"
+```
+
+After Step 7, we have some specefic steps for Android and iOS:
+
+## Step 8 (Android): Sign Android build
+
+## Step 9 (Android): Install Dependencies And Gradle
+
+## Step 10 (Adnroid): Build Android APk and ABB 
+
+
+
+## Step 8 (iOS): Install Dependecies Via POD
+
+## Step 9 (iOS):  Sign iOS 
+
+## Step 10 (iOS):  Build iOS IPA
+
