@@ -96,6 +96,7 @@ workflows:
           app-store-connect fetch-signing-files "$IOS_BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles
+          
       - name: Install dependencies
         script: flutter packages pub get
 

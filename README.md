@@ -183,51 +183,208 @@ To sign the Android build, we first need to encode the `key.jks` and `key.proper
 openssl base64 -in key.jks -out jksEncoded.txt
 openssl base64 -in key.properties -out keyEncoded.txt
 ```
+
 Note: Ensure that you execute these commands in the same directory where key.properties and key.jks are located.
 
 Executing these commands will generate encoded text for key.jks and key.properties. This encoded text should then be added to your Codemagic environment variables.
 
-
 Android:
 
 ```yaml
-    - name: Decode Keystore and Properties
-      script: |
-        echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
-        echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
+- name: Decode Keystore and Properties
+  script: |
+    echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+    echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
 ```
 
 Ensure that `$KEYSTORE` corresponds to your encoded `key.jks` file and `$KEY_PROPERTIES` corresponds to your encoded `key.properties` file. Verify that these variables have been correctly added to your Codemagic dashboard.
 
-
-
 ## Step 9 (Android): Install Dependencies And Gradle
+
 In this section of the workflow, we are installing the necessary dependencies for our project. The `flutter packages pub get` command fetches the Flutter packages needed for the project. We then navigate into the Android directory and run the Gradle wrapper command to ensure the correct Gradle version is used. Finally, we navigate back to the project root.
 
 ```yaml
-    - name: Install dependencies
-      script: |
-        flutter packages pub get 
-        cd android && ./gradlew wrapper --gradle-version 7.4 --distribution-type all
-        cd ..
+- name: Install dependencies
+  script: |
+    flutter packages pub get 
+    cd android && ./gradlew wrapper --gradle-version 7.4 --distribution-type all
+    cd ..
 ```
 
 Please replace `7.4` with the specific version of Gradle that your project requires.
 
-## Step 10 (Adnroid): Build Android APk Or ABB 
+## Step 10 (Adnroid): Build Android APk Or ABB
+
 In this step, we will build the Android APK. The `flutter build apk --split-per-abi` command is used to build an APK file that is split by ABI. This results in smaller APK files that users download, which is particularly useful if your app supports multiple ABIs.
 
-
 ```yaml
-    - name: Flutter build after package name change
-      script: |
-          flutter build apk --split-per-abi
+- name: Flutter build after package name change
+  script: |
+    flutter build apk --split-per-abi
 ```
 
+Good! You've done white-labeling for Android. See the final codmagic.yaml in the end of this document.
 
 ## Step 8 (iOS): Install Dependencies Via POD
 
-## Step 9 (iOS):  Sign iOS 
+We make sure the iOS dependencies already installed
 
-## Step 10 (iOS):  Build iOS IPA
+```yaml
+- name: Install pods
+  script: find . -name "Podfile" -execdir pod install \;
+```
 
+## Step 9 (iOS): Sign iOS
+
+Now, we sign the flutter project for iOS with this script:
+
+```yaml
+- name: iOS code signing
+  script: |
+    keychain initialize
+    app-store-connect fetch-signing-files "$IOS_BUNDLE_ID" --type IOS_APP_STORE --create
+    keychain add-certificates
+    xcode-project use-profiles
+```
+
+## Step 10 (iOS): Build iOS IPA
+
+In the last step, we run pub get to get all packages and then build ipa:
+
+```yaml
+- name: Install dependencies
+  script: flutter packages pub get
+
+- name: Flutter build ipa and automatic versioning
+  script: |
+    flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
+```
+
+Here is the final codemagic.yaml file:
+
+```yaml
+workflows:
+  android-client-release:
+    name: Android client release
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.13.7
+      groups:
+        - sandbox
+    scripts:
+      - name: Change package name
+        script: |
+          flutter pub add rename
+          dart pub global activate rename
+          rename setBundleId --targets android --value $ANDROID_PACKAGE_NAME
+
+      - name: Change Android app name
+        script: rename setAppName --targets ios,android --value $APP_NAME
+
+      - name: Download and unzip assets
+        script: |
+          echo "Downloading assets from $ASSETS_URL"
+          curl -O $ASSETS_URL || echo "Failed to download assets"
+          echo "Unzipping assets.zip"
+          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+
+      - name: Download and unzip Android Google service json file
+        script: |
+          echo "Downloading firebase from $ANDROID_FIREBASE"
+          curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
+          echo "Unzipping google-service.zip"
+          unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
+
+      - name: Download and unzip Android App Icon
+        script: |
+          echo "Downloading icon from $ANDROID_ICON"
+          curl -O $ANDROID_ICON || echo "Failed to download res.zip"
+          echo "Unzipping res.zip"
+          unzip -o res.zip -d android/app/src/main || echo "Failed to unzip res.zip"
+
+      - name: Decode Keystore and Properties
+        script: |
+          echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+          echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
+
+      - name: Install dependencies
+        script: |
+          flutter packages pub get 
+          cd android && ./gradlew wrapper --gradle-version 7.4 --distribution-type all
+          cd ..
+      - name: Flutter build after package name change
+        script: |
+          flutter build apk --split-per-abi
+
+    artifacts:
+      - build/**/outputs/**/*.apk
+
+  ios-client-release:
+    name: iOS client release
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        - sandbox
+      vars:
+        XCODE_SCHEME: "Runner"
+    scripts:
+      - name: Change iOS app name
+        script: |
+          echo "Change iOS app name to $APP_NAME"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
+
+      - name: Set bundle id
+        script: |
+          echo "Change iOS Bundle Id to $IOS_BUNDLE_ID"
+          sed -i '' -e 's/PRODUCT_BUNDLE_IDENTIFIER \= [^\;]*\;/PRODUCT_BUNDLE_IDENTIFIER = '${IOS_BUNDLE_ID}';/' ios/${XCODE_SCHEME}.xcodeproj/project.pbxproj
+
+      - name: Change iOS icons
+        script: |
+          echo "Downloading icon from $IOS_ICON"
+          curl -O $IOS_ICON || echo "Failed to download Assets.xcassets"
+          echo "Unzipping Assets.xcassets.zip"
+          unzip -o Assets.xcassets.zip -d ios/${XCODE_SCHEME}/Assets.xcassets/ || echo "Failed to unzip Assets.xcassets"
+
+      - name: Download and unzip assets
+        script: |
+          echo "Downloading assets from $ASSETS_URL"
+          curl -O $ASSETS_URL || echo "Failed to download assets"
+          echo "Unzipping assets.zip"
+          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+
+      - name: Install pods
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: iOS code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$IOS_BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Install dependencies
+        script: flutter packages pub get
+
+      - name: Flutter build ipa and automatic versioning
+        script: |
+          flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+# Document
+# Make key.properties base64 with this command -> openssl base64 -in key.properties -out outName.txt
+# Make doki.jks base64 with this command -> openssl base64 -in doki.jks -out jskOutName.txt
+# make rsa CERTIFACE_KEY | ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/ios_distribution_private_key -q -N ""
+```
+
+# Conclusion
+
+This concludes the setup and build process for white-label in flutter application. If you encounter any issues or have any questions, please open an issue in the GitHub repository. We appreciate your contribution to this project and look forward to working together to improve it.
+
+## Authors:
+
+<h4>
+Amir Jabbari [ <a href="https://www.linkedin.com/in/amirjabbarii/">LinkedIn</a> ]
+<br>
+Mehran Shoghi [ <a href="https://www.linkedin.com/in/mehranshoghi">LinkedIn</a> ]
+</h4>
