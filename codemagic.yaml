@@ -1,0 +1,120 @@
+workflows:
+  android-client-release:
+    name: Android client release
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.13.7
+      groups:
+        - sandbox
+    scripts:
+      - name: Change package name
+        script: |
+          flutter pub add rename
+          dart pub global activate rename
+          rename setBundleId --targets android --value $ANDROID_PACKAGE_NAME
+
+      - name: Change Android app name
+        script: rename setAppName --targets ios,android --value $APP_NAME
+
+      - name: Download and unzip assets
+        script: |
+          echo "Downloading assets from $ASSETS_URL"
+          curl -O $ASSETS_URL || echo "Failed to download assets"
+          echo "Unzipping assets.zip"
+          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+
+      - name: Download and unzip Android Google service json file
+        script: |
+          echo "Downloading firebase from $ANDROID_FIREBASE"
+          curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
+          echo "Unzipping google-service.zip"
+          unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"  
+
+      - name: Download and unzip Android App Icon
+        script: |
+          echo "Downloading icon from $ANDROID_ICON"
+          curl -O $ANDROID_ICON || echo "Failed to download res.zip"
+          echo "Unzipping res.zip"
+          unzip -o res.zip -d android/app/src/main || echo "Failed to unzip res.zip"          
+
+      - name: Decode Keystore and Properties
+        script: |
+          echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+          echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
+
+      - name: Install dependencies
+        script: |
+          flutter packages pub get 
+          cd android && ./gradlew wrapper --gradle-version 7.4 --distribution-type all
+          cd ..
+      - name: Flutter build after package name change
+        script: |
+          flutter build apk --split-per-abi
+
+    artifacts:
+      - build/**/outputs/**/*.apk
+
+  ios-client-release:
+    name: iOS client release
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        - sandbox
+      vars:
+        XCODE_SCHEME: "Runner"
+    scripts:
+      - name: Change iOS app name
+        script: |
+           echo "Change iOS app name to $APP_NAME"
+           /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
+
+      - name: Set bundle id
+        script: |
+          echo "Change iOS Bundle Id to $IOS_BUNDLE_ID"
+          sed -i '' -e 's/PRODUCT_BUNDLE_IDENTIFIER \= [^\;]*\;/PRODUCT_BUNDLE_IDENTIFIER = '${IOS_BUNDLE_ID}';/' ios/${XCODE_SCHEME}.xcodeproj/project.pbxproj
+
+      # - name: Change iOS icons
+      #   script: |
+      #     echo "Downloading icon from $IOS_ICON"
+      #     curl -O $IOS_ICON || echo "Failed to download Assets.xcassets"
+      #     echo "Unzipping Assets.xcassets.zip"
+      #     unzip -o Assets.xcassets.zip -d ios/${XCODE_SCHEME}/Assets.xcassets/ || echo "Failed to unzip Assets.xcassets"
+
+      - name: Download and unzip assets
+        script: |
+          echo "Downloading assets from $ASSETS_URL"
+          curl -O $ASSETS_URL || echo "Failed to download assets"
+          echo "Unzipping assets.zip"
+          unzip -o assets.zip || echo "Failed to unzip assets.zip"
+
+      - name: Install pods
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: iOS code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$IOS_BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Install dependencies
+        script: flutter packages pub get
+
+      - name: Flutter build ipa and automatic versioning
+        script: |
+          flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+# Document
+# Make key.properties base64 with this command -> openssl base64 -in key.properties -out outName.txt
+# Make doki.jks base64 with this command -> openssl base64 -in doki.jks -out jskOutName.txt
+# make rsa CERTIFACE_KEY | ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/ios_distribution_private_key -q -N ""
+
+
+
+
+
+
+
+
