@@ -183,7 +183,7 @@ After Step 7, we have some specefic steps for Android and iOS:
 
 
 
-## Step 8 (iOS): Install Dependecies Via POD
+## Step 8 (iOS): Install Dependencies Via POD
 
 ## Step 9 (iOS):  Sign iOS 
 
