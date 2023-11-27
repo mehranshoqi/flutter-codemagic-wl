@@ -28,18 +28,18 @@ workflows:
           echo "Downloading firebase from $ANDROID_FIREBASE"
           curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
           echo "Unzipping google-service.zip"
-          unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"  
+          unzip -o <COMPANY_NAME>-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
 
       - name: Download and unzip Android App Icon
         script: |
           echo "Downloading icon from $ANDROID_ICON"
           curl -O $ANDROID_ICON || echo "Failed to download res.zip"
           echo "Unzipping res.zip"
-          unzip -o res.zip -d android/app/src/main || echo "Failed to unzip res.zip"          
+          unzip -o res.zip -d android/app/src/main || echo "Failed to unzip res.zip"
 
       - name: Decode Keystore and Properties
         script: |
-          echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+          echo "$KEYSTORE" | base64 --decode > ./android/app/<COMPANY_NAME>.jks
           echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
 
       - name: Install dependencies
@@ -65,8 +65,8 @@ workflows:
     scripts:
       - name: Change iOS app name
         script: |
-           echo "Change iOS app name to $APP_NAME"
-           /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
+          echo "Change iOS app name to $APP_NAME"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" -c "Set :CFBundleDisplayName $APP_NAME" ios/${XCODE_SCHEME}/Info.plist
 
       - name: Set bundle id
         script: |
@@ -96,7 +96,7 @@ workflows:
           app-store-connect fetch-signing-files "$IOS_BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles
-          
+
       - name: Install dependencies
         script: flutter packages pub get
 
@@ -106,16 +106,8 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-
 # Document
 # Make key.properties base64 with this command -> openssl base64 -in key.properties -out outName.txt
-# Make doki.jks base64 with this command -> openssl base64 -in doki.jks -out jskOutName.txt
+# Make <COMPANY_NAME>.jks base64 with this command -> openssl base64 -in <COMPANY_NAME>.jks -out jskOutName.txt
 # make rsa CERTIFACE_KEY | ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/ios_distribution_private_key -q -N ""
-
-
-
-
-
-
-
 
