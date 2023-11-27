@@ -188,8 +188,6 @@ Note: Ensure that you execute these commands in the same directory where key.pro
 
 Executing these commands will generate encoded text for key.jks and key.properties. This encoded text should then be added to your Codemagic environment variables.
 
-Android:
-
 ```yaml
 - name: Decode Keystore and Properties
   script: |
@@ -213,7 +211,7 @@ In this section of the workflow, we are installing the necessary dependencies fo
 
 Please replace `7.4` with the specific version of Gradle that your project requires.
 
-## Step 10 (Adnroid): Build Android APk Or ABB
+## Step 10 (Android): Build Android APK Or ABB
 
 In this step, we will build the Android APK. The `flutter build apk --split-per-abi` command is used to build an APK file that is split by ABI. This results in smaller APK files that users download, which is particularly useful if your app supports multiple ABIs.
 
@@ -223,7 +221,7 @@ In this step, we will build the Android APK. The `flutter build apk --split-per-
     flutter build apk --split-per-abi
 ```
 
-Good! You've done white-labeling for Android. See the final codmagic.yaml in the end of this document.
+Good! You've done white-labeling for Android. See the final codmagic.yaml at the end of this document.
 
 ## Step 8 (iOS): Install Dependencies Via POD
 
@@ -235,6 +233,36 @@ We make sure the iOS dependencies already installed
 ```
 
 ## Step 9 (iOS): Sign iOS
+
+This step is the hardest, So please pay attention:
+
+First, you should add 3 variables to codemagic dashboard with this names:
+
+1) APP_STORE_CONNECT_ISSUER_ID
+2) APP_STORE_CONNECT_KEY_IDENTIFIER
+3) APP_STORE_CONNECT_PRIVATE_KEY
+
+APP_STORE_CONNECT_ISSUER_ID: You can get it from apple developer console
+
+APP_STORE_CONNECT_KEY_IDENTIFIER: For this, you should add KEY ID from console.
+
+APP_STORE_CONNECT_PRIVATE_KEY: For this you should create a new key with admin permission and download it(.p8 file). then you have to add .p8 file content to codemagic for APP_STORE_CONNECT_PRIVATE_KEY.
+
+![](images/apple-connect.jpg)
+
+Second, Add CERTIFICATE_PRIVATE_KEY variable.
+For CERTIFICATE_PRIVATE_KEY value we export IOS_DISTRIBUTION.p12 file from keychain (Keychain > My Certificates).
+Then you need to create a private key from the key in the keychain with this command:
+
+```
+openssl pkcs12 -legacy -in IOS_DISTRIBUTION.p12 -nodes -nocerts | openssl rsa -out ios_distribution_private_key
+```
+
+Or create a new one with this lasso:
+
+```
+ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/ios_distribution_private_key -q -N ""
+```
 
 Now, we sign the flutter project for iOS with this script:
 
