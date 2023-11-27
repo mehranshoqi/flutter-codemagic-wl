@@ -415,5 +415,5 @@ This concludes the setup and build process for white-label in flutter applicatio
 Amir Jabbari [ <a href="https://www.linkedin.com/in/amirjabbarii/">LinkedIn</a> - <a href="https://github.com/AmirJabbari">Github</a>  ]
 
 <br>
-Mehran Shoghi [ <a href="https://www.linkedin.com/in/mehranshoghi">LinkedIn</a> - <a href="https://github.com/mehranshoqi">Github</a> - <a href="https://mehran.monstser">Website</a> ]
+Mehran Shoghi [ <a href="https://www.linkedin.com/in/mehranshoghi">LinkedIn</a> - <a href="https://github.com/mehranshoqi">Github</a> - <a href="https://mehran.monster">Website</a> ]
 </h5>
