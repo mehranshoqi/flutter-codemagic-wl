@@ -236,7 +236,11 @@ We make sure the iOS dependencies already installed
 
 This step is the hardest, So please pay attention:
 
-First, you should add 3 variables to codemagic dashboard with this names:
+First Make sure you already connected Developer Portal to codemagic like this picture:
+
+![](images/codemagic-1.png)
+
+Second, you should add 3 variables to codemagic dashboard with this names:
 
 1. APP_STORE_CONNECT_ISSUER_ID
 2. APP_STORE_CONNECT_KEY_IDENTIFIER
@@ -250,7 +254,11 @@ APP_STORE_CONNECT_PRIVATE_KEY: For this you should create a new key with admin p
 
 ![](images/apple-connect.jpg)
 
-Second, Add CERTIFICATE_PRIVATE_KEY variable.
+Then, You should fetch certificates from Apple Developer Portal
+
+![](images/codemagic-2.png)
+
+Then, Add CERTIFICATE_PRIVATE_KEY variable.
 For CERTIFICATE_PRIVATE_KEY value we export IOS_DISTRIBUTION.p12 file from keychain (Keychain > My Certificates).
 Then you need to create a private key from the key in the keychain with this command:
 
