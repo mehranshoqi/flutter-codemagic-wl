@@ -133,7 +133,7 @@ Android:
     echo "Downloading firebase from $ANDROID_FIREBASE"
     curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
     echo "Unzipping google-service.zip"
-    unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
+    unzip -o <COMPANY_NAME>-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
 ```
 
 iOS:
@@ -144,7 +144,7 @@ iOS:
     echo "Downloading firebase from $IOS_FIREBASE"
     curl -O $IOS_FIREBASE || echo "Failed to download GoogleService-Info"
     echo "Unzipping GoogleService-Info.zip"
-    unzip -o doki-sandbox-android.zip -d ios/Runner || echo "Failed to unzip GoogleService-Info.zip"
+    unzip -o <COMPANY_NAME>-sandbox-android.zip -d ios/Runner || echo "Failed to unzip GoogleService-Info.zip"
 ```
 
 ## Step 7: Change App Icon
@@ -191,7 +191,7 @@ Executing these commands will generate encoded text for key.jks and key.properti
 ```yaml
 - name: Decode Keystore and Properties
   script: |
-    echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+    echo "$KEYSTORE" | base64 --decode > ./android/app/<COMPANY_NAME>.jks
     echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
 ```
 
@@ -238,9 +238,9 @@ This step is the hardest, So please pay attention:
 
 First, you should add 3 variables to codemagic dashboard with this names:
 
-1) APP_STORE_CONNECT_ISSUER_ID
-2) APP_STORE_CONNECT_KEY_IDENTIFIER
-3) APP_STORE_CONNECT_PRIVATE_KEY
+1. APP_STORE_CONNECT_ISSUER_ID
+2. APP_STORE_CONNECT_KEY_IDENTIFIER
+3. APP_STORE_CONNECT_PRIVATE_KEY
 
 APP_STORE_CONNECT_ISSUER_ID: You can get it from apple developer console
 
@@ -321,7 +321,7 @@ workflows:
           echo "Downloading firebase from $ANDROID_FIREBASE"
           curl -O $ANDROID_FIREBASE || echo "Failed to download google-service"
           echo "Unzipping google-service.zip"
-          unzip -o doki-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
+          unzip -o <COMPANY_NAME>-sandbox-android.zip -d android/app || echo "Failed to unzip google-service.zip"
 
       - name: Download and unzip Android App Icon
         script: |
@@ -332,7 +332,7 @@ workflows:
 
       - name: Decode Keystore and Properties
         script: |
-          echo "$KEYSTORE" | base64 --decode > ./android/app/doki.jks
+          echo "$KEYSTORE" | base64 --decode > ./android/app/<COMPANY_NAME>.jks
           echo "$KEY_PROPERTIES" | base64 --decode > ./android/key.properties
 
       - name: Install dependencies
@@ -401,7 +401,7 @@ workflows:
       - build/ios/ipa/*.ipa
 # Document
 # Make key.properties base64 with this command -> openssl base64 -in key.properties -out outName.txt
-# Make doki.jks base64 with this command -> openssl base64 -in doki.jks -out jskOutName.txt
+# Make <COMPANY_NAME>.jks base64 with this command -> openssl base64 -in <COMPANY_NAME>.jks -out jskOutName.txt
 # make rsa CERTIFACE_KEY | ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/ios_distribution_private_key -q -N ""
 ```
 
@@ -411,8 +411,9 @@ This concludes the setup and build process for white-label in flutter applicatio
 
 ## Authors:
 
-<h4>
-Amir Jabbari [ <a href="https://www.linkedin.com/in/amirjabbarii/">LinkedIn</a> ]
+<h5>
+Amir Jabbari [ <a href="https://www.linkedin.com/in/amirjabbarii/">LinkedIn</a> - <a href="https://github.com/AmirJabbari">Github</a>  ]
+
 <br>
-Mehran Shoghi [ <a href="https://www.linkedin.com/in/mehranshoghi">LinkedIn</a> ]
-</h4>
+Mehran Shoghi [ <a href="https://www.linkedin.com/in/mehranshoghi">LinkedIn</a> - <a href="https://github.com/mehranshoqi">Github</a> - <a href="https://mehran.monstser">Website</a> ]
+</h5>
